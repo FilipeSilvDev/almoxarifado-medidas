@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identificador de Parafusos e Porcas</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --text:#1c2230; --muted:#667085; --line:#e3e6ec;
+    --accent:#d9480f; --accent-soft:#fff1e8; --ok:#1f9d55; --warn:#c77d0a; --bad:#c92a2a;
+    --input:#f9fafb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14171d; --card:#1d222b; --text:#eceff4; --muted:#9aa3b2; --line:#2c3340;
+      --accent:#ff8a4c; --accent-soft:#2b2018; --ok:#4cc38a; --warn:#f0b04a; --bad:#ff7b7b;
+      --input:#161a21;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+  header h1{font-size:1.6rem;margin:8px 0 4px}
+  header p{margin:0 0 20px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .field{flex:1 1 180px}
+  label.lbl{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+  input[type=text],select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);font-size:1.1rem}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;padding:12px 8px;border:0;background:var(--input);color:var(--text);font-size:1rem;cursor:pointer;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:600}
+  .types{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+  .types button{padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--input);color:var(--text);text-align:left;cursor:pointer;font-size:.95rem}
+  .types button small{display:block;color:var(--muted);margin-top:2px}
+  .types button.on{border-color:var(--accent);background:var(--accent-soft)}
+  .conv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:14px}
+  .conv div{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .conv span{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase}
+  .conv b{font-size:1.05rem}
+  .result{text-align:center}
+  .badge{display:inline-block;font-size:3rem;font-weight:800;color:var(--accent);line-height:1.1}
+  .sub{color:var(--muted);margin:4px 0 10px}
+  .tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600;color:#fff}
+  .tag.ok{background:var(--ok)} .tag.warn{background:var(--warn)} .tag.bad{background:var(--bad)}
+  .specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px;text-align:left}
+  .specs div{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .specs span{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase}
+  .alert{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent);font-size:.92rem;text-align:left}
+  h2{font-size:1.05rem;margin:0 0 10px}
+  .alts div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+  .alts div:last-child{border-bottom:0}
+  .alts em{color:var(--muted);font-style:normal}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-size:.75rem;text-transform:uppercase}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--accent-soft)}
+  tbody tr.hit{background:var(--accent-soft);outline:1px solid var(--accent)}
+  .hint{color:var(--muted);font-size:.85rem}
+  .empty{color:var(--muted);text-align:center;padding:14px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔩 Identificador de Parafusos e Porcas</h1>
+    <p>Meça com o paquímetro, digite o valor e descubra se é M2, M3, M4… ou polegada.</p>
+  </header>
+
+  <section class="card">
+    <label class="lbl">O que você está medindo?</label>
+    <div class="types" id="types">
+      <button data-mode="bolt" class="on">Parafuso<small>Ø externo da rosca (cristas)</small></button>
+      <button data-mode="hole">Porca – furo<small>Ø interno do furo roscado</small></button>
+      <button data-mode="af">Porca – chave<small>Medida entre faces (sextavado)</small></button>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="field" style="flex:2 1 200px">
+        <label class="lbl" for="val">Medida</label>
+        <input id="val" type="text" inputmode="decimal" placeholder="ex.: 5,9  ou  5/16" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="lbl">Unidade</label>
+        <div class="seg" id="units">
+          <button data-u="mm" class="on">mm</button>
+          <button data-u="cm">cm</button>
+          <button data-u="in">pol</button>
+        </div>
+      </div>
+    </div>
+    <div class="hint" style="margin-top:8px">Aceita vírgula ou ponto, e frações em polegadas (ex.: 1/4, 1 1/4).</div>
+    <div class="conv" id="conv"></div>
+  </section>
+
+  <section class="card result" id="result">
+    <div class="empty">Digite uma medida para identificar.</div>
+  </section>
+
+  <section class="card" id="altsCard" style="display:none">
+    <h2>Outras possibilidades</h2>
+    <div class="alts" id="alts"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tabela de referência</h2>
+    <input id="filter" type="text" placeholder="Filtrar (ex.: M6, 1/4, 10)…" style="margin-bottom:10px;font-size:1rem">
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Tamanho</th><th>Passo</th><th>Ø rosca (mm)</th><th>Ø furo porca (mm)</th><th>Broca p/ macho</th><th>Chave (mm)</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="hint">Clique numa linha para preencher a medida. Valores métricos: passo grosso padrão ISO; chaves conforme ISO 4032 (algumas porcas DIN 934 usam 17 mm no M10, 19 mm no M12 e 22 mm no M14). Roscas finas (ex.: M10x1,25) têm o mesmo Ø externo, só muda o passo.</p>
+  </section>
+</div>
+
+<script>
+// ---------- Dados ----------
+const IN = 25.4;
+const METRIC = [
+  ['M1',1,.25,2.5],['M1.2',1.2,.25,3],['M1.4',1.4,.3,3],['M1.6',1.6,.35,3.2],['M2',2,.4,4],
+  ['M2.5',2.5,.45,5],['M3',3,.5,5.5],['M3.5',3.5,.6,6],['M4',4,.7,7],['M5',5,.8,8],
+  ['M6',6,1,10],['M8',8,1.25,13],['M10',10,1.5,16],['M12',12,1.75,18],['M14',14,2,21],
+  ['M16',16,2,24],['M18',18,2.5,27],['M20',20,2.5,30],['M22',22,2.5,34],['M24',24,3,36],
+  ['M27',27,3,41],['M30',30,3.5,46],['M36',36,4,55]
+].map(([n,d,p,af])=>({sys:'M',name:n,label:n,d,p,af,pitchTxt:p.toString().replace('.',',')+' mm'}));
+
+const IMPERIAL = [
+  ['#4',.112,40,48],['#6',.138,32,40],['#8',.164,32,36],['#10',.190,24,32],
+  ['1/4"',.25,20,28],['5/16"',.3125,18,24],['3/8"',.375,16,24],['7/16"',.4375,14,20],
+  ['1/2"',.5,13,20],['9/16"',.5625,12,18],['5/8"',.625,11,18],['3/4"',.75,10,16],
+  ['7/8"',.875,9,14],['1"',1,8,12]
+].map(([n,d,c,f])=>({sys:'IN',name:n,label:`${n}-${c} UNC`,d:d*IN,p:IN/c,af:null,
+  pitchTxt:`${c} fios/pol (UNC) · ${f} (UNF)`}));
+
+const ALL = [...METRIC,...IMPERIAL];
+const holeD = it => it.d - 1.0825*it.p;          // diâmetro menor da rosca interna
+const tapDrill = it => it.d - it.p;              // broca para macho
+const fmt = (n,dec=2)=> n.toFixed(dec).replace('.',',');
+
+// ---------- Estado ----------
+let mode='bolt', unit='mm', hitName=null;
+const $ = id=>document.getElementById(id);
+
+// ---------- Utilidades ----------
+function parseVal(s){
+  s=s.trim().replace(',','.');
+  if(!s) return NaN;
+  const m=s.match(/^(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)$/);
+  if(m) return (m[1]?+m[1]:0)+(+m[2])/(+m[3]);
+  return /^\d*\.?\d+$/.test(s)?Number(s):NaN;
+}
+const toMM = (v,u)=> u==='mm'?v : u==='cm'?v*10 : v*IN;
+function fraction(inches){
+  const den=64; let num=Math.round(inches*den), whole=Math.floor(num/den); num-=whole*den;
+  let d=den; while(num>0 && num%2===0 && d>1){num/=2;d/=2;}
+  if(num===0) return whole+'"';
+  return (whole?whole+' ':'')+num+'/'+d+'"';
+}
+function target(it){
+  if(mode==='bolt') return it.d;
+  if(mode==='hole') return holeD(it);
+  return it.af;                                  // chave (só métricas)
+}
+
+// ---------- Cálculo ----------
+function identify(mm){
+  const list = ALL.filter(it=>target(it)!=null).map(it=>{
+    const t=target(it), diff=mm-t;
+    return {it,t,diff,abs:Math.abs(diff),rel:Math.abs(diff)/t};
+  }).sort((a,b)=>a.rel-b.rel);
+  return list;
+}
+function quality(c){
+  const good=Math.max(.15,.03*c.t), near=Math.max(.4,.07*c.t);
+  if(c.abs<=good) return ['ok','Correspondência provável'];
+  if(c.abs<=near) return ['warn','Aproximada – confira a medição'];
+  return ['bad','Sem correspondência padrão'];
+}
+
+// ---------- Renderização ----------
+function renderConv(mm){
+  if(isNaN(mm)){ $('conv').innerHTML=''; return; }
+  const inch=mm/IN;
+  $('conv').innerHTML=
+    `<div><span>Milímetros</span><b>${fmt(mm,3)} mm</b></div>`+
+    `<div><span>Centímetros</span><b>${fmt(mm/10,3)} cm</b></div>`+
+    `<div><span>Polegadas</span><b>${fmt(inch,4)}"</b></div>`+
+    `<div><span>Fração ≈ 1/64</span><b>${fraction(inch)}</b></div>`;
+}
+
+function render(){
+  const raw=parseVal($('val').value);
+  const mm=toMM(raw,unit);
+  renderConv(mm);
+  const res=$('result'), altsCard=$('altsCard');
+  hitName=null;
+  if(isNaN(mm)||mm<=0){
+    res.innerHTML='<div class="empty">Digite uma medida para identificar.</div>';
+    altsCard.style.display='none'; paintTable(); return;
+  }
+  const list=identify(mm), best=list[0], [cls,txt]=quality(best);
+  const it=best.it, what = mode==='af'?'Porca':mode==='hole'?'Porca':'Parafuso';
+  const isOK = cls!=='bad';
+  hitName = isOK ? it.name : null;
+
+  let html='';
+  if(isOK){
+    html+=`<div class="badge">${it.sys==='M'?it.name:it.name}</div>`;
+    html+=`<div class="sub">${what} ${it.sys==='M'?'métrico ISO':'em polegada (UNC/UNF)'} · ${it.sys==='IN'?it.label:''}</div>`;
+  }else{
+    html+=`<div class="badge" style="color:var(--bad);font-size:1.8rem">Não encontrado</div>`;
+    html+=`<div class="sub">Mais próximo: ${it.label}</div>`;
+  }
+  html+=`<span class="tag ${cls}">${txt}</span>`;
+  html+=`<div class="specs">
+    <div><span>Medida informada</span><b>${fmt(mm,2)} mm</b></div>
+    <div><span>Valor padrão (${mode==='bolt'?'Ø rosca':mode==='hole'?'Ø furo':'chave'})</span><b>${fmt(best.t,2)} mm</b></div>
+    <div><span>Diferença</span><b>${best.diff>=0?'+':''}${fmt(best.diff,2)} mm</b></div>
+    <div><span>Passo</span><b>${it.pitchTxt}</b></div>
+    ${it.sys==='M'?`<div><span>Broca p/ macho</span><b>${fmt(tapDrill(it),1)} mm</b></div>`:''}
+    ${it.sys==='M'?`<div><span>Chave da porca</span><b>${fmt(it.af,1)} mm</b></div>`:''}
+    <div><span>Ø nominal</span><b>${fmt(it.d,2)} mm</b></div>
+  </div>`;
+
+  // avisos
+  const notes=[];
+  const second=list[1];
+  if(isOK && second){
+    const [c2]=quality(second);
+    if(c2!=='bad' && second.abs-best.abs<0.35 && second.it.sys!==it.sys)
+      notes.push(`⚠️ Muito próximo de <b>${second.it.label}</b> (${second.it.sys==='IN'?'polegada':'métrico'}). Confirme o passo da rosca para não misturar sistemas.`);
+    else if(c2!=='bad' && second.abs-best.abs<0.2)
+      notes.push(`⚠️ Medida também compatível com <b>${second.it.label}</b>. Meça de novo ou confira o passo.`);
+  }
+  if(mode==='bolt' && isOK && it.sys==='M' && best.diff>0.05)
+    notes.push('Dica: se estiver medindo a cabeça/haste lisa, a medida pode ficar maior que a rosca. Meça nas cristas da rosca.');
+  if(mode==='af') notes.push('Chave: porcas DIN 934 usam 17 mm (M10), 19 mm (M12) e 22 mm (M14). A tabela segue a ISO 4032.');
+  if(mode==='hole') notes.push('Meça o menor diâmetro do furo roscado (nas cristas internas). Roscas finas dão valores um pouco maiores.');
+  if(notes.length) html+=`<div class="alert">${notes.join('<br>')}</div>`;
+  res.innerHTML=html;
+
+  // alternativas
+  const alts=list.slice(1,5);
+  $('alts').innerHTML=alts.map(c=>`<div><span>${c.it.label} <em>(${fmt(c.t,2)} mm)</em></span><em>${c.diff>=0?'+':''}${fmt(c.diff,2)} mm</em></div>`).join('');
+  altsCard.style.display='block';
+  paintTable();
+}
+
+function paintTable(){
+  const f=$('filter').value.trim().toLowerCase();
+  const rows=ALL.filter(it=>!f||it.label.toLowerCase().includes(f)||it.name.toLowerCase().includes(f)||fmt(it.d,1).includes(f));
+  $('tbody').innerHTML=rows.map(it=>`
+    <tr data-n="${it.name}" class="${it.name===hitName?'hit':''}">
+      <td><b>${it.label}</b></td>
+      <td>${it.sys==='M'?fmt(it.p,2):fmt(it.p,2)} mm</td>
+      <td>${fmt(it.d,2)}</td>
+      <td>${fmt(holeD(it),2)}</td>
+      <td>${fmt(tapDrill(it),1)} mm</td>
+      <td>${it.af?fmt(it.af,1):'—'}</td>
+    </tr>`).join('');
+}
+
+// ---------- Eventos ----------
+$('types').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  mode=b.dataset.mode;
+  [...$('types').children].forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+$('units').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  unit=b.dataset.u;
+  [...$('units').children].forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+$('val').addEventListener('input',render);
+$('filter').addEventListener('input',paintTable);
+$('tbody').addEventListener('click',e=>{
+  const tr=e.target.closest('tr'); if(!tr) return;
+  const it=ALL.find(x=>x.name===tr.dataset.n);
+  unit='mm';
+  [...$('units').children].forEach(x=>x.classList.toggle('on',x.dataset.u==='mm'));
+  $('val').value=(mode==='af'&&it.af?it.af:mode==='hole'?holeD(it):it.d).toFixed(2).replace('.',',');
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+render();
+</script>
+</body>
+</html>
